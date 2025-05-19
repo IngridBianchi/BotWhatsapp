@@ -68,3 +68,65 @@ body {
 .hidden {
   display: none !important;
 }
+
+/* Añadir a public/css/style.css */
+.header { margin-bottom: 2rem; }
+.title { color: #2c3e50; margin: 0; }
+.subtitle { color: #7f8c8d; margin: 0.5rem 0 0; }
+
+.qr-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    text-align: center;
+}
+
+.qr-instructions {
+    color: #7f8c8d;
+    margin: 0.5rem 0;
+}
+
+.control-section {
+    margin: 2rem 0;
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: transform 0.2s;
+}
+
+.btn:active { transform: scale(0.98); }
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.stat-icon { font-size: 1.8rem; }
+
+.log-placeholder {
+    color: #95a5a6;
+    text-align: center;
+    padding: 2rem;
+}
+
+.live-indicator {
+    color: #2ecc71;
+    font-size: 0.9em;
+}

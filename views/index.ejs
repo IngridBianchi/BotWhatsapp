@@ -1,42 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>WhatsApp Bot Manager</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Bot WhatsApp</title>
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
 </head>
 <body>
     <div class="container">
-        <h1>Control del Bot WhatsApp</h1>
-        
-        <div id="qr-container" class="hidden">
-            <h2>Escanear QR</h2>
-            <div id="qr-code"></div>
-        </div>
+        <header class="header">
+            <h1 class="title">🦾 Gestor de Bot WhatsApp</h1>
+            <p class="subtitle">Control y monitoreo de mensajes automatizados</p>
+        </header>
 
-        <div class="controls">
-            <button id="start-btn" class="btn-success">Iniciar Bot</button>
-            <button id="stop-btn" class="btn-danger" disabled>Detener Bot</button>
-        </div>
-
-        <div class="stats">
-            <div class="stat-item">
-                <span class="stat-label">Contactos:</span>
-                <span id="contact-count">0</span>
+        <section class="qr-section hidden" id="qr-container">
+            <div class="qr-header">
+                <h2>🔑 Autenticación Requerida</h2>
+                <p class="qr-instructions">Escanea este código con WhatsApp > Dispositivos vinculados</p>
             </div>
-            <div class="stat-item">
-                <span class="stat-label">Enviados:</span>
-                <span id="sent-count">0</span>
-            </div>
-        </div>
+            <div class="qr-code-container" id="qr-code"></div>
+        </section>
 
-        <div class="log-box">
-            <h3>Registro de Actividad</h3>
-            <div id="activity-log"></div>
-        </div>
+        <section class="control-section">
+            <div class="button-group">
+                <button id="start-btn" class="btn btn-success">
+                    <span class="icon">🚀</span> Iniciar Bot
+                </button>
+                <button id="stop-btn" class="btn btn-danger" disabled>
+                    <span class="icon">⛔</span> Detener Bot
+                </button>
+            </div>
+        </section>
+
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📖</div>
+                    <div class="stat-content">
+                        <span class="stat-label">Contactos</span>
+                        <span id="contact-count" class="stat-value">0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✉️</div>
+                    <div class="stat-content">
+                        <span class="stat-label">Enviados</span>
+                        <span id="sent-count" class="stat-value">0</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="log-section">
+            <div class="log-header">
+                <h3>📝 Registro de Actividad</h3>
+                <div class="log-controls">
+                    <span class="badge live-indicator">● EN VIVO</span>
+                </div>
+            </div>
+            <div class="log-container" id="activity-log">
+                <div class="log-placeholder">
+                    Esperando actividad del bot...
+                </div>
+            </div>
+        </section>
     </div>
 
+    <!-- Scripts -->
     <script src="/socket.io/socket.io.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="/js/app.js"></script>
 </body>
 </html>

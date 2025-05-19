@@ -1,3 +1,9 @@
+## Iniciar el Servidor:
+npm start
+# o
+node src/server.js
+
+
 ## Diagrama
     A[Iniciar Cliente] --> B{¿Sesión guardada?}
     B -->|Sí| C[Recuperar sesión]
