@@ -30,6 +30,9 @@
                 <button id="stop-btn" class="btn btn-danger" disabled>
                     <span class="icon">⛔</span> Detener Bot
                 </button>
+                <button id="google-login-btn" class="btn btn-primary">
+                    <span class="icon">🔍</span> Importar contactos de Google
+                </button>
             </div>
         </section>
 
@@ -64,6 +67,13 @@
                     Esperando actividad del bot...
                 </div>
             </div>
+        </section>
+
+        <section class="imported-contacts-section">
+            <h3>👥 Contactos Importados de Google</h3>
+            <div id="successful-numbers" class="contact-list"></div>
+            <h4>❌ Números Fallidos</h4>
+            <div id="failed-numbers" class="contact-list"></div>
         </section>
     </div>
 

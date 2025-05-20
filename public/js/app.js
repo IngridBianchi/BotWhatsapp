@@ -6,31 +6,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const qrCodeDiv = document.getElementById('qr-code');
     const failedNumbersDiv = document.getElementById('failed-numbers');
     const successfulNumbersDiv = document.getElementById('successful-numbers');
+    const googleLoginBtn = document.getElementById('google-login-btn');
 
-    // Variables de estado
     let isBotRunning = false;
 
-    // Manejar inicio del bot
+    // Iniciar bot sin solicitar authCode manual
     startBtn.addEventListener('click', () => {
         if (!isBotRunning) {
-            const authCode = prompt('Por favor, ingresa el código de autenticación de Google:');
-            if (authCode) {
-                socket.emit('start-bot', { authCode });
-                startBtn.disabled = true;
-                stopBtn.disabled = false;
-                qrContainer.classList.remove('hidden');
-                isBotRunning = true;
-            }
+            socket.emit('start-bot');
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            qrContainer.classList.remove('hidden');
+            isBotRunning = true;
         }
     });
 
-    // Manejar detención del bot
     stopBtn.addEventListener('click', () => {
         socket.emit('stop-bot');
         resetUI();
     });
 
-    // Reiniciar UI
     function resetUI() {
         startBtn.disabled = false;
         stopBtn.disabled = true;
@@ -39,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
         isBotRunning = false;
     }
 
-    // Escuchar eventos del servidor
     socket
         .on('qr', (qrImage) => {
             qrCodeDiv.innerHTML = '';
@@ -68,8 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="log-message">${message}</span>
             `;
             log.prepend(entry);
-
-            // Auto-scroll para nuevos mensajes
             log.scrollTop = 0;
         })
         .on('disconnect', () => {
@@ -77,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
             addSystemLog('Desconectado del servidor');
         });
 
-    // Añadir mensajes del sistema
     function addSystemLog(message) {
         const log = document.getElementById('activity-log');
         const entry = document.createElement('div');
@@ -89,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
         log.prepend(entry);
     }
 
-    // Cargar números fallidos y exitosos
     async function loadNumbers() {
         const failedResponse = await fetch('/failed-numbers');
         const failedNumbers = await failedResponse.json();
@@ -99,6 +89,51 @@ document.addEventListener('DOMContentLoaded', () => {
         const successfulNumbers = await successfulResponse.json();
         successfulNumbersDiv.innerHTML = successfulNumbers.map(number => `<div>${number}</div>`).join('');
     }
+
+    // Botón para iniciar login con Google
+    if (googleLoginBtn) {
+        googleLoginBtn.addEventListener('click', () => {
+            const clientId = 'TU_CLIENT_ID';
+            const redirectUri = 'http://localhost:3000';
+            const scope = 'https://www.googleapis.com/auth/contacts.readonly';
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent`;
+            window.location.href = authUrl;
+        });
+    }
+
+    // Si hay un code en la URL, obtener contactos
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    
+    if (code) {
+        fetch('http://localhost:3000/auth/google/callback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ code })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                console.log('✅ Contactos obtenidos desde Google:', data.contacts);
+                addSystemLog(`Se obtuvieron ${data.contacts.length} contactos de Google`);
+    
+                // Emitir el authCode al backend
+                socket.emit('start-bot', { authCode: code });
+    
+                // Deshabilitar el botón y mostrar QR
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                qrContainer.classList.remove('hidden');
+                isBotRunning = true;
+            } else {
+                console.error('Error al obtener contactos:', data.message);
+            }
+        })
+        .catch(err => console.error('Error en la solicitud:', err));
+    }
+    
 
     loadNumbers();
 });
