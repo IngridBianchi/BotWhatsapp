@@ -73,7 +73,7 @@ class MessageLogger {
   }
 
   cleanNumber(number) {
-    return number.toString().replace(/\D/g, '');
+    return number.toString().replace(/[^\d\s\-()+]/g, '');
   }
 
   // Nuevo método para recuperar números fallidos

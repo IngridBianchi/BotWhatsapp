@@ -5,6 +5,8 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const { getGoogleContacts } = require('./bot/googleContacts');
 const { MessageLogger } = require('./bot/messageLog');
 const QRCode = require('qrcode');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -18,11 +20,27 @@ app.get('/', (req, res) => {
     res.render('index');
 });
 
+// Ruta para obtener números fallidos
+app.get('/failed-numbers', (req, res) => {
+    const logger = new MessageLogger();
+    logger.getFailedNumbers().then(failedNumbers => {
+        res.json(failedNumbers);
+    });
+});
+
+// Ruta para obtener números exitosos
+app.get('/successful-numbers', (req, res) => {
+    const logger = new MessageLogger();
+    logger.getLog().then(successfulNumbers => {
+        res.json(successfulNumbers);
+    });
+});
+
 const server = app.listen(port, () => {
     console.log(`Servidor en http://localhost:${port}`);
 });
 
-// Configurar Socket.io con CORS
+// Configuración de Socket.io con CORS
 const io = socketIO(server, {
     cors: {
         origin: "http://localhost:3000",
@@ -37,8 +55,14 @@ io.on('connection', (socket) => {
     console.log('Nuevo cliente conectado');
 
     // Manejar inicio del bot
-    socket.on('start-bot', async () => {
+    socket.on('start-bot', async (data) => {
         try {
+            const { authCode } = data;
+            console.log('data:', data);
+            const contacts = await getGoogleContacts(authCode);
+            socket.emit('contacts-loaded', contacts.length);
+            socket.emit('log', 'Bot listo - Contactos cargados');
+
             whatsappClient = new Client({
                 authStrategy: new LocalAuth(),
                 puppeteer: {
@@ -53,23 +77,20 @@ io.on('connection', (socket) => {
             // Generar QR como imagen base64
             whatsappClient.on('qr', async qr => {
                 try {
-                    const qrImage = await QRCode.toDataURL(qr);
-                    socket.emit('qr', qrImage);  // Enviar imagen del QR
-                    socket.emit('log', 'QR generado - Escanea con WhatsApp');
+                  const qrImage = await QRCode.toDataURL(qr);
+                  console.log('Enviando QR al cliente...');
+                  socket.emit('qr', qrImage); // Enviar imagen del QR
+                  console.log('QR enviado al cliente.');
+                  socket.emit('log', 'QR generado - Escanea con WhatsApp');
                 } catch (error) {
-                    socket.emit('log', `Error generando QR: ${error.message}`);
+                  console.error('Error generando QR:', error);
+                  socket.emit('log', `Error generando QR: ${error.message}`);
                 }
-            });
+              });
 
             // Cuando está listo
             whatsappClient.on('ready', async () => {
-                try {
-                    const contacts = await getGoogleContacts();
-                    socket.emit('contacts-loaded', contacts.length);
-                    socket.emit('log', 'Bot listo - Contactos cargados');
-                } catch (error) {
-                    socket.emit('log', `Error cargando contactos: ${error.message}`);
-                }
+                socket.emit('log', 'Bot listo');
             });
 
             // Manejar mensajes enviados

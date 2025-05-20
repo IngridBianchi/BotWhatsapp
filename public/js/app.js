@@ -4,18 +4,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const stopBtn = document.getElementById('stop-btn');
     const qrContainer = document.getElementById('qr-container');
     const qrCodeDiv = document.getElementById('qr-code');
-    
+    const failedNumbersDiv = document.getElementById('failed-numbers');
+    const successfulNumbersDiv = document.getElementById('successful-numbers');
+
     // Variables de estado
     let isBotRunning = false;
 
     // Manejar inicio del bot
     startBtn.addEventListener('click', () => {
         if (!isBotRunning) {
-            socket.emit('start-bot');
-            startBtn.disabled = true;
-            stopBtn.disabled = false;
-            qrContainer.classList.remove('hidden');
-            isBotRunning = true;
+            const authCode = prompt('Por favor, ingresa el código de autenticación de Google:');
+            if (authCode) {
+                socket.emit('start-bot', { authCode });
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                qrContainer.classList.remove('hidden');
+                isBotRunning = true;
+            }
         }
     });
 
@@ -63,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="log-message">${message}</span>
             `;
             log.prepend(entry);
-            
+
             // Auto-scroll para nuevos mensajes
             log.scrollTop = 0;
         })
@@ -83,4 +88,17 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         log.prepend(entry);
     }
+
+    // Cargar números fallidos y exitosos
+    async function loadNumbers() {
+        const failedResponse = await fetch('/failed-numbers');
+        const failedNumbers = await failedResponse.json();
+        failedNumbersDiv.innerHTML = failedNumbers.map(number => `<div>${number}</div>`).join('');
+
+        const successfulResponse = await fetch('/successful-numbers');
+        const successfulNumbers = await successfulResponse.json();
+        successfulNumbersDiv.innerHTML = successfulNumbers.map(number => `<div>${number}</div>`).join('');
+    }
+
+    loadNumbers();
 });
