@@ -1,8 +1,10 @@
 node_modules/
-.env
 session/
 *.json
 .wwebjs_auth/
 .wwebjs_cache/
 backups/
-
+.env
+token.json
+sent.json
+contact.json

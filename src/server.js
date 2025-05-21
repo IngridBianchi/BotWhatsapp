@@ -16,16 +16,13 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
- // Ajusta bien esta ruta
 
 app.set('view engine', 'ejs');
 
-// Ruta principal
 app.get('/', (req, res) => {
   res.render('index');
 });
 
-// Endpoint para recibir el code y devolver los contactos
 app.post('/auth/google/callback', async (req, res) => {
   const { code } = req.body;
   if (!code) return res.status(400).json({ error: 'No se proporcionó el código de autenticación.' });
@@ -38,26 +35,6 @@ app.post('/auth/google/callback', async (req, res) => {
   }
 });
 
-/* // Después de definir todas las rutas y middleware, justo antes de arrancar el servidor
-console.log('--- RUTAS REGISTRADAS EN EXPRESS ---');
-if (app._router && app._router.stack) {
-  app._router.stack.forEach((middleware) => {
-    if (middleware.route) {
-      console.log(`${Object.keys(middleware.route.methods).join(', ').toUpperCase()} ${middleware.route.path}`);
-    } else if (middleware.name === 'router' && middleware.handle.stack) {
-      middleware.handle.stack.forEach((handler) => {
-        if (handler.route) {
-          console.log(`${Object.keys(handler.route.methods).join(', ').toUpperCase()} ${handler.route.path}`);
-        }
-      });
-    }
-  });
-} else {
-  console.log('No se encontraron rutas registradas en Express.');
-}
-console.log('--- FIN DE LAS RUTAS ---'); */
-
-// Servidor HTTP con Socket.io
 const server = app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
@@ -69,80 +46,99 @@ const io = socketIO(server, {
   }
 });
 
-let whatsappClient = null;
+const whatsappClients = {};
 const logger = new MessageLogger();
 
-io.on('connection', (socket) => {
-  console.log('Nuevo cliente conectado');
+async function createWhatsAppSession(socket, clientId) {
+  if (whatsappClients[clientId]) {
+    socket.emit('log', `La sesión ${clientId} ya existe.`);
+    return;
+  }
 
-  socket.on('start-bot', async (data = {}) => {
+  const client = new Client({
+    authStrategy: new LocalAuth({ clientId }),
+    puppeteer: {
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    }
+  });
+
+  whatsappClients[clientId] = { client, qrInterval: null };
+
+  client.on('qr', async (qr) => {
     try {
-      const { authCode } = data;
-      const contacts = await getGoogleContacts(authCode);
-      socket.emit('contacts-loaded', contacts.length);
-      socket.emit('log', 'Bot listo - Contactos cargados');
+      const qrImage = await QRCode.toDataURL(qr);
+      socket.emit('qr', { clientId, image: qrImage });
 
-      whatsappClient = new Client({
-        authStrategy: new LocalAuth(),
-        puppeteer: {
-          headless: true,
-          args: ['--no-sandbox', '--disable-setuid-sandbox']
-        }
-      });
+      if (whatsappClients[clientId].qrInterval) {
+        clearInterval(whatsappClients[clientId].qrInterval);
+      }
 
-      whatsappClient.on('qr', async (qr) => {
+      whatsappClients[clientId].qrInterval = setInterval(async () => {
         try {
-          const qrImage = await QRCode.toDataURL(qr);
-          socket.emit('qr', qrImage);
-          socket.emit('log', 'QR generado - Escanea con WhatsApp');
-        } catch (error) {
-          socket.emit('log', `Error generando QR: ${error.message}`);
+          const newQrImage = await QRCode.toDataURL(qr);
+          socket.emit('qr', { clientId, image: newQrImage });
+        } catch (e) {
+          socket.emit('log', `Error regenerando QR: ${e.message}`);
         }
-      });
+      }, 30000);
 
-      whatsappClient.on('ready', () => {
-        socket.emit('log', 'Bot listo');
-      });
-
-      whatsappClient.on('message', async (msg) => {
-        if (msg.fromMe) {
-          try {
-            const number = msg.to.split('@')[0];
-            await logger.logNumber(number);
-            socket.emit('message-sent');
-            socket.emit('log', `Mensaje enviado a: ${number}`);
-          } catch (error) {
-            socket.emit('log', `Error registrando mensaje: ${error.message}`);
-          }
-        }
-      });
-
-      await whatsappClient.initialize();
-
-    } catch (error) {
-      socket.emit('log', `ERROR INICIAL: ${error.message}`);
+    } catch (e) {
+      socket.emit('log', `Error generando QR: ${e.message}`);
     }
   });
 
-  socket.on('stop-bot', () => {
-    if (whatsappClient) {
-      whatsappClient.destroy();
-      socket.emit('log', 'Bot detenido manualmente');
-      socket.emit('qr-clear');
+  client.on('ready', () => {
+    socket.emit('log', `Sesión ${clientId} lista.`);
+    if (whatsappClients[clientId]?.qrInterval) {
+      clearInterval(whatsappClients[clientId].qrInterval);
+      whatsappClients[clientId].qrInterval = null;
     }
   });
 
-  socket.on('disconnect', () => {
-    if (whatsappClient) whatsappClient.destroy();
+  client.on('message', async (msg) => {
+    if (msg.fromMe) {
+      try {
+        const number = msg.to.split('@')[0];
+        await logger.logNumber(number);
+        socket.emit('message-sent', { clientId });
+        socket.emit('log', `Mensaje enviado a ${number} desde ${clientId}`);
+      } catch (error) {
+        socket.emit('log', `Error registrando mensaje: ${error.message}`);
+      }
+    }
+  });
+
+  await client.initialize();
+}
+
+io.on('connection', (socket) => {
+  socket.on('start-bot', async ({ authCode, clientId }) => {
+    try {
+      const contacts = await getGoogleContacts(authCode);
+      socket.emit('contacts-loaded', { clientId, count: contacts.length });
+      await createWhatsAppSession(socket, clientId);
+    } catch (e) {
+      socket.emit('log', `Error al iniciar sesión: ${e.message}`);
+    }
+  });
+
+  socket.on('stop-bot', ({ clientId }) => {
+    const session = whatsappClients[clientId];
+    if (session) {
+      session.client.destroy();
+      if (session.qrInterval) clearInterval(session.qrInterval);
+      delete whatsappClients[clientId];
+      socket.emit('log', `Sesión ${clientId} detenida.`);
+      socket.emit('qr-clear', { clientId });
+    }
   });
 });
 
-//(Opcional) Ruta para SPA que maneje cualquier otra ruta (pero ojo con interferir con otras APIs)
-/* app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/index.html'));
-}); */
-// Solo devolver index.html si no se trata de assets como .js, .css, .png, etc.
-app.get(/^\/(?!css|js|images|socket\.io).*$/, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/index.html'));
-  });
-  
+app.get('/failed-numbers', (req, res) => {
+  res.json([]);
+});
+
+app.get('/successful-numbers', (req, res) => {
+  res.json([]);
+});
