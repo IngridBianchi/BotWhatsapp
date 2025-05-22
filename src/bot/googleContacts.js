@@ -119,6 +119,4 @@ async function getGoogleContacts(code) {
     }
 }
 
-module.exports = { getGoogleContacts
-, loadCredentials, authorize, listContacts
-, authorize };
+module.exports = { getGoogleContacts, loadCredentials, authorize, listContacts };

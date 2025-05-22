@@ -23,17 +23,19 @@ class BackupManager {
 
   async createBackup() {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    
+  
     try {
       // Copiar archivos críticos
       await this.copyFile('sent.json', `sent-${timestamp}.json`);
       await this.copyFile('contacts.json', `contacts-${timestamp}.json`);
-      
+      await this.copyFile('failed.json', `failed-${timestamp}.json`); // 👈 Nuevo
+  
       console.log(`✅ Backup creado: ${timestamp}`);
     } catch (error) {
       console.error('❌ Error en backup:', error);
     }
   }
+  
 
   async copyFile(source, targetName) {
     const sourcePath = path.join(__dirname, source);
