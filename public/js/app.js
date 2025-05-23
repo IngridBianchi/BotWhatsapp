@@ -1,6 +1,6 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const socket = io();
 
+document.addEventListener('DOMContentLoaded', async () => {
+    const socket = io();
     const startBtn = document.getElementById('start-btn');
     const stopBtn = document.getElementById('stop-btn');
     const qrContainer = document.getElementById('qr-container');
@@ -11,6 +11,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const sessionIdInput = document.getElementById('session-id');
 
     let clientId = `session-${Date.now()}`;
+    let googleAuthCode = null;
+
+    // Obtener GOOGLE_AUTH_CODE desde el servidor
+    try {
+        const response = await fetch('/api/google-auth-code');
+        const data = await response.json();
+        googleAuthCode = data.googleAuthCode;
+    } catch (error) {
+        console.error('Error al obtener GOOGLE_AUTH_CODE:', error);
+    }
 
     function resetUI() {
         startBtn.disabled = false;
@@ -25,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const urlParams = new URLSearchParams(window.location.search);
         //const code = urlParams.get('code');
-        const code = "4/0AUJR-x4KvzWlczI35TEXYIpg9jFgIRLLHp0b2zn-pVdyp2sAri1WA5gV6Oo81m9MtaaFog"
+        const code = googleAuthCode ;
 
         if (!code) {
             alert('Debes autenticar con Google primero.');

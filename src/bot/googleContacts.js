@@ -1,18 +1,15 @@
-require('dotenv').config();
 const fs = require('fs');
 const { google } = require('googleapis');
-
-const SCOPES = [process.env.GOOGLE_SCOPES];
+const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, GOOGLE_SCOPES } = require('../../envData');
+const SCOPES = [GOOGLE_SCOPES];
 const TOKEN_PATH = 'token.json';
-const credentialClientId = process.env.GOOGLE_CLIENT_ID;
-console.log('credentialClientId',credentialClientId);
 
 function loadCredentials(callback) {
     const credentials = {
         installed: {
-            client_id: process.env.GOOGLE_CLIENT_ID,
-            client_secret: process.env.GOOGLE_CLIENT_SECRET,
-            redirect_uris: [process.env.GOOGLE_REDIRECT_URI]
+            client_id: GOOGLE_CLIENT_ID,
+            client_secret: GOOGLE_CLIENT_SECRET,
+            redirect_uris: [GOOGLE_REDIRECT_URI]
         }
     };
     console.log('loadCredentials -> credentials',credentials);
@@ -97,9 +94,9 @@ async function getGoogleContacts(code) {
     try {
         const credentials = {
             installed: {
-                client_id: process.env.GOOGLE_CLIENT_ID,
-                client_secret: process.env.GOOGLE_CLIENT_SECRET,
-                redirect_uris: [process.env.GOOGLE_REDIRECT_URI]
+                client_id: GOOGLE_CLIENT_ID,
+                client_secret: GOOGLE_CLIENT_SECRET,
+                redirect_uris: [GOOGLE_REDIRECT_URI]
             }
         };
         console.log('credentials',credentials);

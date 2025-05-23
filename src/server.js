@@ -1,4 +1,3 @@
-require('dotenv').config();
 const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
@@ -9,10 +8,9 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const { getGoogleContacts } = require('./bot/googleContacts');
 const { MessageLogger } = require('./bot/messageLog');
 const QRCode = require('qrcode');
-
+const {PORT_ENV, GOOGLE_AUTH_CODE} = require('../envData');
 const app = express();
-const PORT = process.env.PORT || 3000;
-
+const PORT = PORT_ENV;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
@@ -133,6 +131,10 @@ io.on('connection', (socket) => {
       socket.emit('qr-clear', { clientId });
     }
   });
+});
+
+app.get('/api/google-auth-code', (req, res) => {
+  res.json({ googleAuthCode: GOOGLE_AUTH_CODE });
 });
 
 app.get('/failed-numbers', (req, res) => {
