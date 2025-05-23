@@ -9,7 +9,7 @@
 </head>
 <body>
   <div class="container">
-    <header class="header">
+    <header class="header" style="text-align: center;">
       <h1 class="title">🦾 Gestor de Bot WhatsApp</h1>
       <p class="subtitle">Control y monitoreo de mensajes automatizados</p>
     </header>
@@ -22,6 +22,21 @@
         <img id="manual-qr-img" alt="QR generado" />
       </div>
     </section> -->
+
+    <!-- Control principal -->
+    <section class="control-section">
+      <div class="button-group">
+        <button id="start-btn" class="btn btn-success">
+          <span class="icon">🚀</span> Iniciar Bot
+        </button>
+        <button id="stop-btn" class="btn btn-danger" disabled>
+          <span class="icon">⛔</span> Detener Bot
+        </button>
+        <button id="google-login-btn" class="btn btn-primary">
+          <span class="icon">🔍</span> Importar contactos de Google
+        </button>
+      </div>
+    </section>
 
     <!-- QR individual estándar -->
     <section class="qr-section hidden" id="qr-container">
@@ -38,21 +53,6 @@
         <button id="add-session-btn" class="btn btn-secondary">➕ Nueva Sesión</button>
         <div id="multi-qr-container" class="multi-qr-grid"></div>
       </section>
-
-    <!-- Control principal -->
-    <section class="control-section">
-      <div class="button-group">
-        <button id="start-btn" class="btn btn-success">
-          <span class="icon">🚀</span> Iniciar Bot
-        </button>
-        <button id="stop-btn" class="btn btn-danger" disabled>
-          <span class="icon">⛔</span> Detener Bot
-        </button>
-        <button id="google-login-btn" class="btn btn-primary">
-          <span class="icon">🔍</span> Importar contactos de Google
-        </button>
-      </div>
-    </section>
 
     <!-- Estadísticas -->
     <section class="stats-section">
@@ -141,36 +141,53 @@
     let sessionCount = 0;
 
     document.getElementById('add-session-btn').addEventListener('click', () => {
+      //console.log('sessionCount ',sessionCount)
       sessionCount++;
-      const sessionId = `session-${sessionCount}`;
-      createSessionCard(sessionId);
-      socket.emit('start-bot', { sessionId }); // Backend debe manejar sessionId
+      const clientId = `session-${sessionCount}`;
+      createSessionCard(clientId);
+      socket.emit('start-bot', { clientId: clientId }); // Backend debe manejar clientId
     });
 
-    function createSessionCard(sessionId) {
+    function createSessionCard(clientId) {
       const container = document.getElementById('multi-qr-container');
       const card = document.createElement('div');
       card.className = 'qr-session-card';
-      card.id = sessionId;
+      card.id = clientId;
       card.innerHTML = `
-        <h4>Sesión ${sessionId}</h4>
-        <div class="qr-code" id="qr-${sessionId}">Esperando QR...</div>
-        <button class="btn btn-danger" onclick="stopSession('${sessionId}')">Detener</button>
+        <h4>Sesión ${clientId}</h4>
+        <div class="qr-code" id="qr-${clientId}">Esperando QR...</div>
+        <button class="btn btn-danger" onclick="stopSession('${clientId}')">Detener</button>
       `;
       container.appendChild(card);
     }
 
-    function stopSession(sessionId) {
-      socket.emit('stop-bot', { sessionId });
-      document.getElementById(sessionId).remove();
+    function stopSession(clientId) {
+      socket.emit('stop-bot', { clientId: clientId });
+      document.getElementById(clientId).remove();
     }
 
-    socket.on('qr', ({ sessionId, qr }) => {
-      const qrDiv = document.getElementById(`qr-${sessionId}`);
-      if (qrDiv) {
-        qrDiv.innerHTML = `<img src="${qr}" alt="QR para ${sessionId}" />`;
+    socket.on('qr', ({ clientId, image }) => {
+      const qrDiv = document.getElementById(`qr-${clientId}`);
+      if (!qrDiv) {
+        console.warn(`No se encontró el contenedor para clientId: ${clientId}`);
+        return;
       }
+    
+      if (!image) {
+        console.error(`Imagen QR inválida para clientId: ${clientId}`);
+        qrDiv.innerHTML = "Error al cargar el QR";
+        return;
+      }
+    
+      qrDiv.innerHTML = ""; // Limpiar el contenedor antes de agregar el nuevo QR
+      const img = document.createElement("img");
+      img.src = image;
+      img.alt = `QR para ${clientId}`;
+      img.style.borderRadius = "8px";
+      qrDiv.appendChild(img);
     });
+
+  
 
     socket.on('log', (msg) => {
       const logContainer = document.getElementById('activity-log');
@@ -180,8 +197,8 @@
       logContainer.scrollTop = logContainer.scrollHeight;
     });
 
-    socket.on('qr-clear', ({ sessionId }) => {
-      const qrDiv = document.getElementById(`qr-${sessionId}`);
+    socket.on('qr-clear', ({ clientId }) => {
+      const qrDiv = document.getElementById(`qr-${clientId}`);
       if (qrDiv) {
         qrDiv.innerHTML = 'QR eliminado';
       }

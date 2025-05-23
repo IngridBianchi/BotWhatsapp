@@ -65,26 +65,24 @@ async function createWhatsAppSession(socket, clientId) {
 
   client.on('qr', async (qr) => {
     try {
+      console.log(`Generando QR para clientId: ${clientId}`);
       const qrImage = await QRCode.toDataURL(qr);
+      if (!clientId || !qrImage) {
+        console.error("Error: clientId o qrImage no válidos");
+        return;
+      }
       socket.emit('qr', { clientId, image: qrImage });
-
+  
+      // Eliminar el intervalo de regeneración constante
       if (whatsappClients[clientId].qrInterval) {
         clearInterval(whatsappClients[clientId].qrInterval);
+        whatsappClients[clientId].qrInterval = null;
       }
-
-      whatsappClients[clientId].qrInterval = setInterval(async () => {
-        try {
-          const newQrImage = await QRCode.toDataURL(qr);
-          socket.emit('qr', { clientId, image: newQrImage });
-        } catch (e) {
-          socket.emit('log', `Error regenerando QR: ${e.message}`);
-        }
-      }, 30000);
 
     } catch (e) {
       socket.emit('log', `Error generando QR: ${e.message}`);
     }
-  });
+  }); 
 
   client.on('ready', () => {
     socket.emit('log', `Sesión ${clientId} lista.`);
@@ -115,6 +113,8 @@ io.on('connection', (socket) => {
     try {
       const contacts = await getGoogleContacts(authCode);
       socket.emit('contacts-loaded', { clientId, count: contacts.length });
+      socket.emit('log', `Sesión ${clientId} conectada.`);
+
       await createWhatsAppSession(socket, clientId);
     } catch (e) {
       socket.emit('log', `Error al iniciar sesión: ${e.message}`);
@@ -126,8 +126,8 @@ io.on('connection', (socket) => {
     if (session) {
       session.client.destroy();
       if (session.qrInterval) clearInterval(session.qrInterval);
-      delete whatsappClients[clientId];
       socket.emit('log', `Sesión ${clientId} detenida.`);
+      delete whatsappClients[clientId];
       socket.emit('qr-clear', { clientId });
     }
   });
