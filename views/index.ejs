@@ -1,208 +1,170 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Gestor de Bot WhatsApp</title>
-  <link rel="stylesheet" href="/css/style.css" />
-  <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon" />
-</head>
-<body>
-  <div class="container">
-    <header class="header" style="text-align: center;">
-      <h1 class="title">🦾 Gestor de Bot WhatsApp</h1>
-      <p class="subtitle">Control y monitoreo de mensajes automatizados</p>
-    </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestor de Bot WhatsApp</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header" style="text-align: center">
+        <h1 class="title">🦾 Gestor de Bot WhatsApp</h1>
+        <p class="subtitle">Control y monitoreo de mensajes automatizados</p>
+      </header>
 
-    <!-- Generación manual de QR -->
-    <!-- <section class="manual-qr-section">
-      <input type="text" id="qr-text-input" placeholder="Texto para QR" />
-      <button id="generate-qr-btn" class="btn">Generar QR Manual</button>
-      <div id="manual-qr-output" class="hidden">
-        <img id="manual-qr-img" alt="QR generado" />
-      </div>
-    </section> -->
+      <!-- Control principal -->
+      <section class="control-section">
+        <div class="button-group">
+          <button id="start-btn" class="btn btn-success">
+            <span class="icon">🚀</span> Iniciar Bot
+          </button>
+          <button id="stop-btn" class="btn btn-danger" disabled>
+            <span class="icon">⛔</span> Detener Bot
+          </button>
+          <button id="google-login-btn" class="btn btn-primary">
+            <span class="icon">🔍</span> Importar contactos de Google
+          </button>
+        </div>
+      </section>
 
-    <!-- Control principal -->
-    <section class="control-section">
-      <div class="button-group">
-        <button id="start-btn" class="btn btn-success">
-          <span class="icon">🚀</span> Iniciar Bot
-        </button>
-        <button id="stop-btn" class="btn btn-danger" disabled>
-          <span class="icon">⛔</span> Detener Bot
-        </button>
-        <button id="google-login-btn" class="btn btn-primary">
-          <span class="icon">🔍</span> Importar contactos de Google
-        </button>
-      </div>
-    </section>
+      <!-- QR individual estándar -->
+      <section class="qr-section hidden" id="qr-container">
+        <div class="qr-header">
+          <h2>🔑 Autenticación Requerida</h2>
+          <p class="qr-instructions">
+            Escanea este código con WhatsApp > Dispositivos vinculados
+          </p>
+        </div>
+        <div class="qr-code-container" id="qr-code"></div>
+      </section>
 
-    <!-- QR individual estándar -->
-    <section class="qr-section hidden" id="qr-container">
-      <div class="qr-header">
-        <h2>🔑 Autenticación Requerida</h2>
-        <p class="qr-instructions">Escanea este código con WhatsApp > Dispositivos vinculados</p>
-      </div>
-      <div class="qr-code-container" id="qr-code"></div>
-    </section>
-
-    <!-- NUEVA SECCIÓN: Multi-sesiones QR -->
-    <section class="multi-qr-section">
+      <!-- NUEVA SECCIÓN: Multi-sesiones QR -->
+      <section class="multi-qr-section">
         <h2>🧩 Múltiples Bots WhatsApp</h2>
-        <button id="add-session-btn" class="btn btn-secondary">➕ Nueva Sesión</button>
+        <button id="add-session-btn" class="btn btn-secondary">
+          ➕ Nueva Sesión
+        </button>
         <div id="multi-qr-container" class="multi-qr-grid"></div>
       </section>
 
-    <!-- Estadísticas -->
-    <section class="stats-section">
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">📖</div>
-          <div class="stat-content">
-            <span class="stat-label">Contactos</span>
-            <span id="contact-count" class="stat-value">0</span>
+      <!-- Estadísticas -->
+      <section class="stats-section">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">📖</div>
+            <div class="stat-content">
+              <span class="stat-label">Contactos</span>
+              <span id="contact-count" class="stat-value">0</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">✉️</div>
+            <div class="stat-content">
+              <span class="stat-label">Enviados</span>
+              <span id="sent-count" class="stat-value">0</span>
+            </div>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon">✉️</div>
-          <div class="stat-content">
-            <span class="stat-label">Enviados</span>
-            <span id="sent-count" class="stat-value">0</span>
+      </section>
+
+      <!-- Registro -->
+      <section class="log-section">
+        <div class="log-header">
+          <h3>📝 Registro de Actividad</h3>
+          <div class="log-controls">
+            <span class="badge live-indicator">● EN VIVO</span>
           </div>
         </div>
-      </div>
-    </section>
-
-    <!-- Registro -->
-    <section class="log-section">
-      <div class="log-header">
-        <h3>📝 Registro de Actividad</h3>
-        <div class="log-controls">
-          <span class="badge live-indicator">● EN VIVO</span>
+        <div class="log-container" id="activity-log">
+          <div class="log-placeholder">Esperando actividad del bot...</div>
         </div>
-      </div>
-      <div class="log-container" id="activity-log">
-        <div class="log-placeholder">
-          Esperando actividad del bot...
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Contactos -->
-    <section class="imported-contacts-section">
-      <h3>👥 Contactos Importados de Google</h3>
-      <div id="successful-numbers" class="contact-list"></div>
-      <h4>❌ Números Fallidos</h4>
-      <div id="failed-numbers" class="contact-list"></div>
-    </section>
+      <!-- Contactos -->
+      <section class="imported-contacts-section">
+        <h3>👥 Contactos Importados de Google</h3>
+        <div id="successful-numbers" class="contact-list"></div>
+        <h4>❌ Números Fallidos</h4>
+        <div id="failed-numbers" class="contact-list"></div>
+      </section>
+    </div>
 
-    
-  </div>
+    <!-- Scripts -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/app.js"></script>
 
-  <!-- Scripts -->
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/app.js"></script>
+    <!-- Script para manejar múltiples sesiones QR -->
+    <script>
+      const socket = io();
+      let sessionCount = 0;
 
-  <!-- Script QR manual -->
- <!--  <script>
-    document.getElementById('generate-qr-btn').addEventListener('click', async () => {
-      const text = document.getElementById('qr-text-input').value.trim();
-      if (!text) {
-        alert('Por favor ingresa un texto.');
-        return;
-      }
-
-      try {
-        const response = await fetch('/generate-qr', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text })
+      document
+        .getElementById("add-session-btn")
+        .addEventListener("click", () => {
+          //console.log('sessionCount ',sessionCount)
+          sessionCount++;
+          const clientId = `session-${sessionCount}`;
+          createSessionCard(clientId);
+          socket.emit("start-bot", { clientId: clientId });
         });
 
-        const data = await response.json();
-
-        if (data.success) {
-          document.getElementById('manual-qr-img').src = data.qr;
-          document.getElementById('manual-qr-output').classList.remove('hidden');
-        } else {
-          alert('Error al generar el QR');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Error de conexión al generar el QR');
-      }
-    });
-  </script> -->
-
-  <!-- Script para manejar múltiples sesiones QR -->
-  <script>
-    const socket = io();
-    let sessionCount = 0;
-
-    document.getElementById('add-session-btn').addEventListener('click', () => {
-      //console.log('sessionCount ',sessionCount)
-      sessionCount++;
-      const clientId = `session-${sessionCount}`;
-      createSessionCard(clientId);
-      socket.emit('start-bot', { clientId: clientId }); // Backend debe manejar clientId
-    });
-
-    function createSessionCard(clientId) {
-      const container = document.getElementById('multi-qr-container');
-      const card = document.createElement('div');
-      card.className = 'qr-session-card';
-      card.id = clientId;
-      card.innerHTML = `
+      function createSessionCard(clientId) {
+        const container = document.getElementById("multi-qr-container");
+        const card = document.createElement("div");
+        card.className = "qr-session-card";
+        card.id = clientId;
+        card.innerHTML = `
         <h4>Sesión ${clientId}</h4>
         <div class="qr-code" id="qr-${clientId}">Esperando QR...</div>
         <button class="btn btn-danger" onclick="stopSession('${clientId}')">Detener</button>
       `;
-      container.appendChild(card);
-    }
-
-    function stopSession(clientId) {
-      socket.emit('stop-bot', { clientId: clientId });
-      document.getElementById(clientId).remove();
-    }
-
-    socket.on('qr', ({ clientId, image }) => {
-      const qrDiv = document.getElementById(`qr-${clientId}`);
-      if (!qrDiv) {
-        console.warn(`No se encontró el contenedor para clientId: ${clientId}`);
-        return;
+        container.appendChild(card);
       }
-    
-      if (!image) {
-        console.error(`Imagen QR inválida para clientId: ${clientId}`);
-        qrDiv.innerHTML = "Error al cargar el QR";
-        return;
+
+      function stopSession(clientId) {
+        socket.emit("stop-bot", { clientId: clientId });
+        document.getElementById(clientId).remove();
       }
-    
-      qrDiv.innerHTML = ""; // Limpiar el contenedor antes de agregar el nuevo QR
-      const img = document.createElement("img");
-      img.src = image;
-      img.alt = `QR para ${clientId}`;
-      img.style.borderRadius = "8px";
-      qrDiv.appendChild(img);
-    });
 
-  
+      socket.on("qr", ({ clientId, image }) => {
+        const qrDiv = document.getElementById(`qr-${clientId}`);
+        if (!qrDiv) {
+          console.warn(
+            `No se encontró el contenedor para clientId: ${clientId}`
+          );
+          return;
+        }
 
-    socket.on('log', (msg) => {
-      const logContainer = document.getElementById('activity-log');
-      const entry = document.createElement('div');
-      entry.textContent = msg;
-      logContainer.appendChild(entry);
-      logContainer.scrollTop = logContainer.scrollHeight;
-    });
+        if (!image) {
+          console.error(`Imagen QR inválida para clientId: ${clientId}`);
+          qrDiv.innerHTML = "Error al cargar el QR";
+          return;
+        }
 
-    socket.on('qr-clear', ({ clientId }) => {
-      const qrDiv = document.getElementById(`qr-${clientId}`);
-      if (qrDiv) {
-        qrDiv.innerHTML = 'QR eliminado';
-      }
-    });
-  </script>
-</body>
+        qrDiv.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = image;
+        img.alt = `QR para ${clientId}`;
+        img.style.borderRadius = "8px";
+        qrDiv.appendChild(img);
+      });
+
+      socket.on("log", (msg) => {
+        const logContainer = document.getElementById("activity-log");
+        const entry = document.createElement("div");
+        entry.textContent = msg;
+        logContainer.appendChild(entry);
+        logContainer.scrollTop = logContainer.scrollHeight;
+      });
+
+      socket.on("qr-clear", ({ clientId }) => {
+        const qrDiv = document.getElementById(`qr-${clientId}`);
+        if (qrDiv) {
+          qrDiv.innerHTML = "QR eliminado";
+        }
+      });
+    </script>
+  </body>
 </html>

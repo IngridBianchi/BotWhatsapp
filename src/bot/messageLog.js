@@ -76,7 +76,28 @@ class MessageLogger {
     return number.toString().replace(/[^\d\s\-()+]/g, '');
   }
 
-  // Nuevo método para recuperar números fallidos
+  async logSentMessage(number, message) {
+  try {
+    const sentMessagesFile = path.join(__dirname, 'sentMessages.json');
+    const timestamp = new Date().toISOString();
+    const logEntry = { number: this.cleanNumber(number), message, timestamp };
+
+    let existingLogs = [];
+    try {
+      const data = await fs.readFile(sentMessagesFile, 'utf8');
+      existingLogs = JSON.parse(data);
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error; 
+    }
+
+    existingLogs.push(logEntry);
+    await fs.writeFile(sentMessagesFile, JSON.stringify(existingLogs, null, 2), 'utf8');
+    console.log(`✅ Mensaje enviado registrado: ${JSON.stringify(logEntry)}`);
+  } catch (error) {
+    console.error('Error registrando mensaje enviado:', error);
+  }
+}
+
   async getFailedNumbers() {
     try {
       const failedFile = path.join(__dirname, 'failed.json');

@@ -12,7 +12,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   let clientId = `session-${Date.now()}`;
   let googleAuthCode = null;
 
-  // Obtener GOOGLE_AUTH_CODE desde el servidor
   try {
     const response = await fetch("/api/google-auth-code");
     const data = await response.json();
@@ -45,7 +44,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     stopBtn.disabled = false;
     //qrContainer.classList.remove('hidden');
 
-    // Crear un contenedor único para esta sesión
     const sessionContainer = document.createElement("div");
     sessionContainer.id = `session-${clientId}`;
     sessionContainer.className = "session-container";
@@ -67,23 +65,26 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   socket.on("qr", ({ clientId, image }) => {
     if (!clientId || !image) {
-        console.error("Datos inválidos recibidos en el evento 'qr':", { clientId, image });
-        return;
-      }
+      console.error("Datos inválidos recibidos en el evento 'qr':", {
+        clientId,
+        image,
+      });
+      return;
+    }
     console.log(`Evento 'qr' recibido para clientId: ${clientId}`);
     console.log(`Imagen QR recibida: ${image}`);
     const qrDiv = document.getElementById(`qr-${clientId}`);
     if (!qrDiv) {
       console.warn(`No se encontró el contenedor para clientId: ${clientId}`);
-      return; // Si no existe el contenedor, no hacer nada
+      return;
     }
-    qrDiv.innerHTML = ""; // Limpiar el contenedor antes de agregar el nuevo QR
+    qrDiv.innerHTML = "";
     const img = document.createElement("img");
     img.src = image;
     img.alt = `QR Code ${clientId}`;
     img.style.borderRadius = "8px";
     qrDiv.appendChild(img);
-  
+
     const sessionContainer = document.getElementById(`session-${clientId}`);
     if (sessionContainer) {
       sessionContainer.style.display = "block";
@@ -92,9 +93,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   socket.on("qr-clear", ({ clientId }) => {
     if (!clientId) {
-        console.error("clientId no definido en el evento 'qr-clear'");
-        return;
-      }
+      console.error("clientId no definido en el evento 'qr-clear'");
+      return;
+    }
     const sessionContainer = document.getElementById(`session-${clientId}`);
     if (sessionContainer) sessionContainer.remove(); // Eliminar el contenedor de la sesión
   });
@@ -113,7 +114,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   socket.on("log", (message) => {
-    console.error(message); // Mostrar el mensaje de error en la consola
+    console.error(message);
     const log = document.getElementById("activity-log");
     const entry = document.createElement("div");
     entry.className = "log-entry";
@@ -155,7 +156,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       .join("");
   }
 
-  // Detectar code tras login con Google
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get("code");
 

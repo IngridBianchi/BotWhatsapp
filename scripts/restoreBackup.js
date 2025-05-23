@@ -1,7 +1,7 @@
 const MessageLogger = require('./messageLog');
 const logger = new MessageLogger();
 
-// Uso: node restoreBackup.js 2023-10-05T12-34-56-123Z
+
 const timestamp = process.argv[2];
 
 if (!timestamp) {

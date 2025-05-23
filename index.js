@@ -6,7 +6,7 @@ const { MessageLogger } = require('./messageLog');
 const BackupManager = require('./backupManager');
 const backupManager = new BackupManager();
 
-// Inicializar backups
+
 backupManager.initialize();
 
 const client = new Client({
@@ -14,13 +14,13 @@ const client = new Client({
   puppeteer: { headless: true }
 });
 
-// 1. Manejar QR Code
+
 client.on('qr', qr => {
   qrcode.generate(qr, { small: true });
   console.log('Escanea el código QR desde WhatsApp > Dispositivos vinculados');
 });
 
-// 2. Cuando esté listo
+
 client.on('ready', async () => {
   console.log('¡Cliente listo!');
   
@@ -36,7 +36,7 @@ client.on('ready', async () => {
       
       await sendMessage(contact);
       await logger.logNumber(contact.number);
-      await delay(30000); // Espera 30 segundos
+      await delay(30000); 
     }
     
   } catch (error) {
@@ -44,7 +44,7 @@ client.on('ready', async () => {
   }
 });
 
-// 3. Función de envío
+
 async function sendMessage(contact) {
   try {
     const number = contact.number + '@c.us';
@@ -58,7 +58,6 @@ async function sendMessage(contact) {
   }
 }
 
-// Helper
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }

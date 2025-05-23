@@ -1,28 +1,5 @@
 ## Iniciar el Servidor:
-npm start
-# o
-node src/server.js
-
-
-## Diagrama
-    A[Iniciar Cliente] --> B{¿Sesión guardada?}
-    B -->|Sí| C[Recuperar sesión]
-    B -->|No| D[Generar QR]
-    C --> E[Listo para enviar]
-    D --> E
-    E --> F[Cargar contactos]
-    F --> G[Cargar log histórico]
-    G --> H[Iniciar flujo de mensajes]
-
-## Backup
-    A[Inicio] --> B[Inicializar BackupManager]
-    B --> C[Programar Backups]
-    C --> D{Ejecución Horaria}
-    D -->|Sí| E[Crear copias .json]
-    D -->|No| F[Esperar]
-    E --> G[Limpiar backups antiguos]
-    G --> H[Registrar en log]
-
+npm run dev
 
 # Ver últimos backups
 ls -lh backups/
